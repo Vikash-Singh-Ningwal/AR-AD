@@ -1,121 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <title>AR Video Experience</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-
+  
   <style>
+    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+
+    /* Glassmorphism Start UI */
     #startUI {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(15, 15, 15, 0.9);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      color: white; text-align: center;
     }
-    button {
-      font-size: 20px;
-      padding: 16px 30px;
+
+    #startBtn {
+      padding: 15px 40px; font-size: 1.2rem; cursor: pointer;
+      background: #0070f3; color: white; border: none; border-radius: 8px;
+      transition: transform 0.2s; box-shadow: 0 4px 14px 0 rgba(0,118,243,0.39);
+    }
+
+    #startBtn:active { transform: scale(0.95); }
+
+    /* Scanning Overlay */
+    #scanningOverlay {
+      position: fixed; inset: 0; z-index: 50;
+      display: none; pointer-events: none;
+      justify-content: center; align-items: center;
+    }
+
+    .scanner-line {
+      width: 70%; height: 2px; background: #0070f3;
+      position: absolute; box-shadow: 0 0 15px #0070f3;
+      animation: scan 2s infinite ease-in-out;
+    }
+
+    @keyframes scan {
+      0%, 100% { top: 30%; }
+      50% { top: 70%; }
     }
   </style>
 </head>
 
 <body>
 
-<!-- START BUTTON -->
-<div id="startUI">
-  <button id="startBtn">Start AR</button>
-</div>
+  <div id="startUI">
+    <h1>AR Experience</h1>
+    <p>Please allow camera access to begin.</p>
+    <button id="startBtn">Enter AR</button>
+  </div>
 
-<a-scene
-  mindar-image="imageTargetSrc: /targets/targets.mind"
-  vr-mode-ui="enabled: false"
+  <div id="scanningOverlay">
+    <div class="scanner-line"></div>
+    <p style="color: white; margin-top: 150px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Scanning for Target...</p>
+  </div>
+<a-scene 
+  mindar-image="imageTargetSrc: ./targets/targets.mind; uiScanning: #scanningOverlay;" 
+  vr-mode-ui="enabled: false" 
   device-orientation-permission-ui="enabled: false">
-
+  
   <a-assets>
-    <video id="madhuVideo"
-      src="/assets/madhu.mp4"
-      loop
-      playsinline
-      webkit-playsinline
-      crossorigin="anonymous">
-    </video>
-
-    <video id="vikashVideo"
-      src="/assets/vikash.mp4"
-      loop
-      playsinline
-      webkit-playsinline
-      crossorigin="anonymous">
-    </video>
+    <video id="madhuVideo" src="./assets/madhu.mp4" loop playsinline crossorigin="anonymous"></video>
+    <video id="vikashVideo" src="./assets/vikash.mp4" loop playsinline crossorigin="anonymous"></video>
   </a-assets>
 
-  <a-camera look-controls="enabled: false"></a-camera>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- TARGET 0 -->
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-video src="#madhuVideo"></a-video>
+  <a-entity id="target0" mindar-image-target="targetIndex: 0">
+    <a-video src="#madhuVideo" 
+             width="1" 
+             height="1" 
+             position="0 0 0" 
+             rotation="0 0 0">
+    </a-video>
   </a-entity>
 
-  <!-- TARGET 1 -->
-  <a-entity mindar-image-target="targetIndex: 1">
-    <a-video src="#vikashVideo"></a-video>
+  <a-entity id="target1" mindar-image-target="targetIndex: 1">
+    <a-video src="#vikashVideo" 
+             width="1" 
+             height="1" 
+             position="0 0 0" 
+             rotation="0 0 0">
+    </a-video>
   </a-entity>
-
 </a-scene>
 
-<script>
-  const startBtn = document.getElementById('startBtn');
-  const startUI  = document.getElementById('startUI');
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const startUI = document.getElementById('startUI');
+    const videos = [document.getElementById('madhuVideo'), document.getElementById('vikashVideo')];
 
-  const madhuVideo  = document.getElementById('madhuVideo');
-  const vikashVideo = document.getElementById('vikashVideo');
-
-  // 🔑 REQUIRED FOR AUDIO ON MOBILE
-  startBtn.addEventListener('click', async () => {
-    startUI.style.display = 'none';
-
-    madhuVideo.muted = false;
-    vikashVideo.muted = false;
-
-    try {
-      await madhuVideo.play(); madhuVideo.pause();
-      await vikashVideo.play(); vikashVideo.pause();
-    } catch (e) {
-      console.log('Autoplay unlocked');
-    }
-  });
-
-  // PLAY / PAUSE
-  document
-    .querySelector('[mindar-image-target="targetIndex: 0"]')
-    .addEventListener('targetFound', () => {
-      madhuVideo.currentTime = 0;
-      madhuVideo.play();
+    // Interaction to unlock audio on mobile
+    startBtn.addEventListener('click', () => {
+      startUI.style.display = 'none';
+      videos.forEach(v => {
+        v.play().then(() => v.pause()); // Prime videos
+      });
     });
 
-  document
-    .querySelector('[mindar-image-target="targetIndex: 0"]')
-    .addEventListener('targetLost', () => {
-      madhuVideo.pause();
-    });
+    // Control Playback on detection
+    const setupTarget = (targetId, videoId) => {
+      const target = document.getElementById(targetId);
+      const video = document.getElementById(videoId);
+      
+      target.addEventListener('targetFound', () => {
+        video.currentTime = 0;
+        video.play();
+      });
+      
+      target.addEventListener('targetLost', () => {
+        video.pause();
+      });
+    };
 
-  document
-    .querySelector('[mindar-image-target="targetIndex: 1"]')
-    .addEventListener('targetFound', () => {
-      vikashVideo.currentTime = 0;
-      vikashVideo.play();
-    });
-
-  document
-    .querySelector('[mindar-image-target="targetIndex: 1"]')
-    .addEventListener('targetLost', () => {
-      vikashVideo.pause();
-    });
-</script>
-
+    setupTarget('target0', 'madhuVideo');
+    setupTarget('target1', 'vikashVideo');
+  </script>
 </body>
 </html>
