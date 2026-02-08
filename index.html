@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>AR Video Experience</title>
 
   <!-- A-Frame -->
@@ -14,20 +13,16 @@
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       overflow: hidden;
     }
 
-    /* START UI */
+    /* START SCREEN */
     #startUI {
       position: fixed;
       inset: 0;
-      background: linear-gradient(
-        135deg,
-        rgba(0,0,0,0.9),
-        rgba(25,25,25,0.95)
-      );
+      background: linear-gradient(135deg, #000, #111);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -37,8 +32,8 @@
     .card {
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(14px);
+      padding: 30px;
       border-radius: 20px;
-      padding: 32px 26px;
       width: 90%;
       max-width: 340px;
       text-align: center;
@@ -48,14 +43,14 @@
     .card h1 {
       color: #fff;
       font-size: 24px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .card p {
       color: #ccc;
       font-size: 14px;
-      margin-bottom: 24px;
       line-height: 1.5;
+      margin-bottom: 24px;
     }
 
     #startBtn {
@@ -95,128 +90,139 @@
 
 <body>
 
-  <!-- START UI -->
-  <div id="startUI">
-    <div class="card">
-      <h1>📸 AR Video</h1>
-      <p>
-        Point your camera at the image target<br>
-        to play the AR video.
-      </p>
-      <button id="startBtn">Start AR</button>
-      <div class="hint">📱 Allow camera • 🔊 Tap 🔊 for sound</div>
-    </div>
+<!-- START UI -->
+<div id="startUI">
+  <div class="card">
+    <h1>📸 AR Video</h1>
+    <p>
+      Tap Start, allow camera access,<br>
+      then point at the image target.
+    </p>
+    <button id="startBtn">Start AR</button>
+    <div class="hint">📱 Camera permission required</div>
   </div>
+</div>
 
-  <!-- SOUND TOGGLE -->
-  <button id="soundBtn">🔊 Sound</button>
+<!-- SOUND BUTTON -->
+<button id="soundBtn">🔊 Sound</button>
 
-  <!-- AR SCENE -->
-  <a-scene
-    mindar-image="imageTargetSrc: targets/targets.mind"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
+<!-- AR SCENE (AUTO START DISABLED) -->
+<a-scene
+  mindar-image="imageTargetSrc: targets/targets.mind; autoStart: false"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  embedded>
 
-    <a-assets>
-      <!-- MUTED VIDEOS (CRITICAL) -->
-      <video
-        id="madhuVideo"
-        src="assets/madhu.mp4"
-        loop
-        muted
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous">
-      </video>
+  <a-assets>
+    <!-- MUST BE MUTED -->
+    <video
+      id="madhuVideo"
+      src="assets/madhu.mp4"
+      loop
+      muted
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous">
+    </video>
 
-      <video
-        id="vikashVideo"
-        src="assets/vikash.mp4"
-        loop
-        muted
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous">
-      </video>
-    </a-assets>
+    <video
+      id="vikashVideo"
+      src="assets/vikash.mp4"
+      loop
+      muted
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous">
+    </video>
+  </a-assets>
 
-    <a-camera look-controls="enabled: false"></a-camera>
+  <a-camera look-controls="enabled: false"></a-camera>
 
-    <!-- TARGET 0 -->
-    <a-entity mindar-image-target="targetIndex: 0">
-      <a-video
-        src="#madhuVideo"
-        width="1"
-        height="0.56"
-        position="0 0 0">
-      </a-video>
-    </a-entity>
+  <!-- TARGET 0 -->
+  <a-entity mindar-image-target="targetIndex: 0">
+    <a-video
+      src="#madhuVideo"
+      width="1"
+      height="0.56"
+      position="0 0 0">
+    </a-video>
+  </a-entity>
 
-    <!-- TARGET 1 -->
-    <a-entity mindar-image-target="targetIndex: 1">
-      <a-video
-        src="#vikashVideo"
-        width="1"
-        height="0.56"
-        position="0 0 0">
-      </a-video>
-    </a-entity>
+  <!-- TARGET 1 -->
+  <a-entity mindar-image-target="targetIndex: 1">
+    <a-video
+      src="#vikashVideo"
+      width="1"
+      height="0.56"
+      position="0 0 0">
+    </a-video>
+  </a-entity>
 
-  </a-scene>
+</a-scene>
 
-  <!-- SCRIPT -->
-  <script>
-    const startUI = document.getElementById("startUI");
-    const startBtn = document.getElementById("startBtn");
-    const soundBtn = document.getElementById("soundBtn");
+<script>
+  const startUI = document.getElementById("startUI");
+  const startBtn = document.getElementById("startBtn");
+  const soundBtn = document.getElementById("soundBtn");
 
-    const madhuVideo = document.getElementById("madhuVideo");
-    const vikashVideo = document.getElementById("vikashVideo");
+  const madhuVideo = document.getElementById("madhuVideo");
+  const vikashVideo = document.getElementById("vikashVideo");
 
-    // Start AR
-    startBtn.addEventListener("click", async () => {
-      startUI.style.display = "none";
+  const sceneEl = document.querySelector("a-scene");
 
-      // Unlock video playback (still muted)
-      try {
-        await madhuVideo.play(); madhuVideo.pause();
-        await vikashVideo.play(); vikashVideo.pause();
-      } catch (e) {
-        console.log("Playback unlocked");
-      }
+  // START AR AFTER USER CLICK (CRITICAL FIX)
+  startBtn.addEventListener("click", async () => {
+    startUI.style.display = "none";
 
-      soundBtn.style.display = "block";
-    });
+    await sceneEl.systems["mindar-image-system"].start();
 
-    // Enable sound (USER GESTURE REQUIRED)
-    soundBtn.addEventListener("click", () => {
-      madhuVideo.muted = false;
-      vikashVideo.muted = false;
-      soundBtn.innerText = "🔇 Mute";
-    });
+    // unlock playback (still muted)
+    try {
+      await madhuVideo.play(); madhuVideo.pause();
+      await vikashVideo.play(); vikashVideo.pause();
+    } catch (e) {}
 
-    // TARGET 0
-    const target0 = document.querySelector('[mindar-image-target="targetIndex: 0"]');
-    target0.addEventListener("targetFound", () => {
-      vikashVideo.pause();
-      madhuVideo.currentTime = 0;
-      madhuVideo.play();
-    });
-    target0.addEventListener("targetLost", () => {
-      madhuVideo.pause();
-    });
+    soundBtn.style.display = "block";
+  });
 
-    // TARGET 1
-    const target1 = document.querySelector('[mindar-image-target="targetIndex: 1"]');
-    target1.addEventListener("targetFound", () => {
-      madhuVideo.pause();
-      vikashVideo.currentTime = 0;
-      vikashVideo.play();
-    });
-    target1.addEventListener("targetLost", () => {
-      vikashVideo.pause();
-    });
-  </script>
+  // ENABLE SOUND (OPTIONAL)
+  soundBtn.addEventListener("click", () => {
+    madhuVideo.muted = false;
+    vikashVideo.muted = false;
+    soundBtn.textContent = "🔇 Mute";
+  });
+
+  // TARGET EVENTS
+  const target0 = document.querySelector('[mindar-image-target="targetIndex: 0"]');
+  const target1 = document.querySelector('[mindar-image-target="targetIndex: 1"]');
+
+  target0.addEventListener("targetFound", () => {
+    vikashVideo.pause();
+    madhuVideo.currentTime = 0;
+    madhuVideo.play();
+  });
+
+  target0.addEventListener("targetLost", () => {
+    madhuVideo.pause();
+  });
+
+  target1.addEventListener("targetFound", () => {
+    madhuVideo.pause();
+    vikashVideo.currentTime = 0;
+    vikashVideo.play();
+  });
+
+  target1.addEventListener("targetLost", () => {
+    vikashVideo.pause();
+  });
+
+  // STOP CAMERA WHEN TAB HIDDEN (MOBILE STABILITY)
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      sceneEl.systems["mindar-image-system"].stop();
+    }
+  });
+</script>
 
 </body>
 </html>
