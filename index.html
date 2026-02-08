@@ -6,11 +6,11 @@
 
   <title>AR Video Experience</title>
 
-  <!-- A-Frame & MindAR -->
+  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <!-- UI Styles -->
   <style>
     body {
       margin: 0;
@@ -19,7 +19,7 @@
       overflow: hidden;
     }
 
-    /* START SCREEN */
+    /* START UI */
     #startUI {
       position: fixed;
       inset: 0;
@@ -29,8 +29,8 @@
         rgba(25,25,25,0.95)
       );
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       z-index: 10;
     }
 
@@ -38,7 +38,7 @@
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(14px);
       border-radius: 20px;
-      padding: 34px 28px;
+      padding: 32px 26px;
       width: 90%;
       max-width: 340px;
       text-align: center;
@@ -52,10 +52,10 @@
     }
 
     .card p {
-      color: #cfcfcf;
+      color: #ccc;
       font-size: 14px;
+      margin-bottom: 24px;
       line-height: 1.5;
-      margin-bottom: 26px;
     }
 
     #startBtn {
@@ -68,18 +68,27 @@
       cursor: pointer;
       color: #fff;
       background: linear-gradient(135deg, #6a5cff, #00d4ff);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    #startBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(0,212,255,0.45);
     }
 
     .hint {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 12px;
       color: #aaa;
+    }
+
+    /* SOUND BUTTON */
+    #soundBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+      padding: 10px 14px;
+      border-radius: 50px;
+      border: none;
+      font-size: 14px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      display: none;
     }
   </style>
 </head>
@@ -91,13 +100,16 @@
     <div class="card">
       <h1>📸 AR Video</h1>
       <p>
-        Point your camera at the image target<br />
-        to see the video come alive.
+        Point your camera at the image target<br>
+        to play the AR video.
       </p>
       <button id="startBtn">Start AR</button>
-      <div class="hint">🔊 Enable sound • 📱 Allow camera access</div>
+      <div class="hint">📱 Allow camera • 🔊 Tap 🔊 for sound</div>
     </div>
   </div>
+
+  <!-- SOUND TOGGLE -->
+  <button id="soundBtn">🔊 Sound</button>
 
   <!-- AR SCENE -->
   <a-scene
@@ -106,10 +118,12 @@
     device-orientation-permission-ui="enabled: false">
 
     <a-assets>
+      <!-- MUTED VIDEOS (CRITICAL) -->
       <video
         id="madhuVideo"
         src="assets/madhu.mp4"
         loop
+        muted
         playsinline
         webkit-playsinline
         crossorigin="anonymous">
@@ -119,6 +133,7 @@
         id="vikashVideo"
         src="assets/vikash.mp4"
         loop
+        muted
         playsinline
         webkit-playsinline
         crossorigin="anonymous">
@@ -153,48 +168,51 @@
   <script>
     const startUI = document.getElementById("startUI");
     const startBtn = document.getElementById("startBtn");
+    const soundBtn = document.getElementById("soundBtn");
 
     const madhuVideo = document.getElementById("madhuVideo");
     const vikashVideo = document.getElementById("vikashVideo");
 
-    // Unlock audio on mobile
+    // Start AR
     startBtn.addEventListener("click", async () => {
-      startBtn.innerText = "Loading...";
-      startBtn.disabled = true;
+      startUI.style.display = "none";
 
-      madhuVideo.muted = false;
-      vikashVideo.muted = false;
-
+      // Unlock video playback (still muted)
       try {
         await madhuVideo.play(); madhuVideo.pause();
         await vikashVideo.play(); vikashVideo.pause();
       } catch (e) {
-        console.log("Autoplay unlocked");
+        console.log("Playback unlocked");
       }
 
-      startUI.style.display = "none";
+      soundBtn.style.display = "block";
     });
 
-    // TARGET 0 EVENTS
-    const target0 = document.querySelector('[mindar-image-target="targetIndex: 0"]');
+    // Enable sound (USER GESTURE REQUIRED)
+    soundBtn.addEventListener("click", () => {
+      madhuVideo.muted = false;
+      vikashVideo.muted = false;
+      soundBtn.innerText = "🔇 Mute";
+    });
 
+    // TARGET 0
+    const target0 = document.querySelector('[mindar-image-target="targetIndex: 0"]');
     target0.addEventListener("targetFound", () => {
+      vikashVideo.pause();
       madhuVideo.currentTime = 0;
       madhuVideo.play();
     });
-
     target0.addEventListener("targetLost", () => {
       madhuVideo.pause();
     });
 
-    // TARGET 1 EVENTS
+    // TARGET 1
     const target1 = document.querySelector('[mindar-image-target="targetIndex: 1"]');
-
     target1.addEventListener("targetFound", () => {
+      madhuVideo.pause();
       vikashVideo.currentTime = 0;
       vikashVideo.play();
     });
-
     target1.addEventListener("targetLost", () => {
       vikashVideo.pause();
     });
