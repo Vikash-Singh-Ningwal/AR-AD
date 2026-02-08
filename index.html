@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+   
+    button {
+      font-size: 20px;
+      padding: 16px 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- START BUTTON -->
+<div id="startUI">
+  <button id="startBtn">Start AR</button>
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: /targets/targets.mind"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+
+  <a-assets>
+    <video id="madhuVideo"
+      src="/assets/madhu.mp4"
+      loop
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous">
+    </video>
+
+    <video id="vikashVideo"
+      src="/assets/vikash.mp4"
+      loop
+      playsinline
+      webkit-playsinline
+      crossorigin="anonymous">
+    </video>
+  </a-assets>
+
+  <a-camera look-controls="enabled: false"></a-camera>
+
+  <!-- TARGET 0 -->
+  <a-entity mindar-image-target="targetIndex: 0">
+    <a-video src="#madhuVideo"></a-video>
+  </a-entity>
+
+  <!-- TARGET 1 -->
+  <a-entity mindar-image-target="targetIndex: 1">
+    <a-video src="#vikashVideo"></a-video>
+  </a-entity>
+
+</a-scene>
+
+<script>
+  const startBtn = document.getElementById('startBtn');
+  const startUI  = document.getElementById('startUI');
+
+  const madhuVideo  = document.getElementById('madhuVideo');
+  const vikashVideo = document.getElementById('vikashVideo');
+
+  // 🔑 REQUIRED FOR AUDIO ON MOBILE
+  startBtn.addEventListener('click', async () => {
+    startUI.style.display = 'none';
+
+    madhuVideo.muted = false;
+    vikashVideo.muted = false;
+
+    try {
+      await madhuVideo.play(); madhuVideo.pause();
+      await vikashVideo.play(); vikashVideo.pause();
+    } catch (e) {
+      console.log('Autoplay unlocked');
+    }
+  });
+
+  // PLAY / PAUSE
+  document
+    .querySelector('[mindar-image-target="targetIndex: 0"]')
+    .addEventListener('targetFound', () => {
+      madhuVideo.currentTime = 0;
+      madhuVideo.play();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 0"]')
+    .addEventListener('targetLost', () => {
+      madhuVideo.pause();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 1"]')
+    .addEventListener('targetFound', () => {
+      vikashVideo.currentTime = 0;
+      vikashVideo.play();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 1"]')
+    .addEventListener('targetLost', () => {
+      vikashVideo.pause();
+    });
+</script>
+
+</body>
+</html>
