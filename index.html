@@ -1,135 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AR Video Experience</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow: hidden;
-    }
-
-    /* START SCREEN */
     #startUI {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, #000, #111);
+      background: rgba(0,0,0,0.85);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 10;
     }
-
-    .card {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(14px);
-      padding: 30px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 340px;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-    }
-
-    .card h1 {
-      color: #fff;
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-
-    .card p {
-      color: #ccc;
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 24px;
-    }
-
-    #startBtn {
-      width: 100%;
-      padding: 14px;
-      font-size: 18px;
-      font-weight: 600;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      color: #fff;
-      background: linear-gradient(135deg, #6a5cff, #00d4ff);
-    }
-
-    .hint {
-      margin-top: 14px;
-      font-size: 12px;
-      color: #aaa;
-    }
-
-    /* SOUND BUTTON */
-    #soundBtn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 20;
-      padding: 10px 14px;
-      border-radius: 50px;
-      border: none;
-      font-size: 14px;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      display: none;
+    button {
+      font-size: 20px;
+      padding: 16px 30px;
     }
   </style>
 </head>
 
 <body>
 
-<!-- START UI -->
+<!-- START BUTTON -->
 <div id="startUI">
-  <div class="card">
-    <h1>📸 AR Video</h1>
-    <p>
-      Tap Start, allow camera access,<br>
-      then point at the image target.
-    </p>
-    <button id="startBtn">Start AR</button>
-    <div class="hint">📱 Camera permission required</div>
-  </div>
+  <button id="startBtn">Start AR</button>
 </div>
 
-<!-- SOUND BUTTON -->
-<button id="soundBtn">🔊 Sound</button>
-
-<!-- AR SCENE (AUTO START DISABLED) -->
 <a-scene
-  mindar-image="imageTargetSrc: targets/targets.mind; autoStart: false"
+  mindar-image="imageTargetSrc: /targets/targets.mind"
   vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false"
-  embedded>
+  device-orientation-permission-ui="enabled: false">
 
   <a-assets>
-    <!-- MUST BE MUTED -->
-    <video
-      id="madhuVideo"
-      src="assets/madhu.mp4"
+    <video id="madhuVideo"
+      src="/assets/madhu.mp4"
       loop
-      muted
       playsinline
       webkit-playsinline
       crossorigin="anonymous">
     </video>
 
-    <video
-      id="vikashVideo"
-      src="assets/vikash.mp4"
+    <video id="vikashVideo"
+      src="/assets/vikash.mp4"
       loop
-      muted
       playsinline
       webkit-playsinline
       crossorigin="anonymous">
@@ -140,88 +57,64 @@
 
   <!-- TARGET 0 -->
   <a-entity mindar-image-target="targetIndex: 0">
-    <a-video
-      src="#madhuVideo"
-      width="1"
-      height="0.56"
-      position="0 0 0">
-    </a-video>
+    <a-video src="#madhuVideo"></a-video>
   </a-entity>
 
   <!-- TARGET 1 -->
   <a-entity mindar-image-target="targetIndex: 1">
-    <a-video
-      src="#vikashVideo"
-      width="1"
-      height="0.56"
-      position="0 0 0">
-    </a-video>
+    <a-video src="#vikashVideo"></a-video>
   </a-entity>
 
 </a-scene>
 
 <script>
-  const startUI = document.getElementById("startUI");
-  const startBtn = document.getElementById("startBtn");
-  const soundBtn = document.getElementById("soundBtn");
+  const startBtn = document.getElementById('startBtn');
+  const startUI  = document.getElementById('startUI');
 
-  const madhuVideo = document.getElementById("madhuVideo");
-  const vikashVideo = document.getElementById("vikashVideo");
+  const madhuVideo  = document.getElementById('madhuVideo');
+  const vikashVideo = document.getElementById('vikashVideo');
 
-  const sceneEl = document.querySelector("a-scene");
+  // 🔑 REQUIRED FOR AUDIO ON MOBILE
+  startBtn.addEventListener('click', async () => {
+    startUI.style.display = 'none';
 
-  // START AR AFTER USER CLICK (CRITICAL FIX)
-  startBtn.addEventListener("click", async () => {
-    startUI.style.display = "none";
+    madhuVideo.muted = false;
+    vikashVideo.muted = false;
 
-    await sceneEl.systems["mindar-image-system"].start();
-
-    // unlock playback (still muted)
     try {
       await madhuVideo.play(); madhuVideo.pause();
       await vikashVideo.play(); vikashVideo.pause();
-    } catch (e) {}
-
-    soundBtn.style.display = "block";
-  });
-
-  // ENABLE SOUND (OPTIONAL)
-  soundBtn.addEventListener("click", () => {
-    madhuVideo.muted = false;
-    vikashVideo.muted = false;
-    soundBtn.textContent = "🔇 Mute";
-  });
-
-  // TARGET EVENTS
-  const target0 = document.querySelector('[mindar-image-target="targetIndex: 0"]');
-  const target1 = document.querySelector('[mindar-image-target="targetIndex: 1"]');
-
-  target0.addEventListener("targetFound", () => {
-    vikashVideo.pause();
-    madhuVideo.currentTime = 0;
-    madhuVideo.play();
-  });
-
-  target0.addEventListener("targetLost", () => {
-    madhuVideo.pause();
-  });
-
-  target1.addEventListener("targetFound", () => {
-    madhuVideo.pause();
-    vikashVideo.currentTime = 0;
-    vikashVideo.play();
-  });
-
-  target1.addEventListener("targetLost", () => {
-    vikashVideo.pause();
-  });
-
-  // STOP CAMERA WHEN TAB HIDDEN (MOBILE STABILITY)
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      sceneEl.systems["mindar-image-system"].stop();
+    } catch (e) {
+      console.log('Autoplay unlocked');
     }
   });
+
+  // PLAY / PAUSE
+  document
+    .querySelector('[mindar-image-target="targetIndex: 0"]')
+    .addEventListener('targetFound', () => {
+      madhuVideo.currentTime = 0;
+      madhuVideo.play();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 0"]')
+    .addEventListener('targetLost', () => {
+      madhuVideo.pause();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 1"]')
+    .addEventListener('targetFound', () => {
+      vikashVideo.currentTime = 0;
+      vikashVideo.play();
+    });
+
+  document
+    .querySelector('[mindar-image-target="targetIndex: 1"]')
+    .addEventListener('targetLost', () => {
+      vikashVideo.pause();
+    });
 </script>
 
 </body>
