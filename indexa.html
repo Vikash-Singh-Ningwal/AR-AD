@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Auto Target Video</title>
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body { margin: 0; background: #000; overflow: hidden; }
+    #startUI {
+      position: fixed; inset: 0;
+      display: flex; justify-content: center; align-items: center;
+      background: #000; z-index: 10;
+    }
+    button {
+      padding: 14px 24px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="startUI">
+  <button id="startBtn">Start AR</button>
+</div>
+
+<a-scene
+  mindar-image="imageTargetSrc: targets/targets.mind; autoStart: false"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  embedded>
+
+  <a-assets id="videoAssets"></a-assets>
+
+  <a-camera look-controls="enabled: false"></a-camera>
+
+</a-scene>
+
+<script>
+  const startBtn = document.getElementById("startBtn");
+  const startUI = document.getElementById("startUI");
+  const sceneEl = document.querySelector("a-scene");
+  const assetsEl = document.getElementById("videoAssets");
+
+  // 🔥 SINGLE SOURCE OF TRUTH
+  const targetConfig = [
+    { name: "madhu" },
+    { name: "vikash" },
+    { name: "rahul" }
+  ];
+
+  const videos = [];
+
+  // CREATE VIDEOS + TARGETS AUTOMATICALLY
+  targetConfig.forEach((item, index) => {
+
+    // VIDEO
+    const video = document.createElement("video");
+    video.setAttribute("id", item.name);
+    video.setAttribute("src", `assets/${item.name}.mp4`);
+    video.setAttribute("loop", "");
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("crossorigin", "anonymous");
+    assetsEl.appendChild(video);
+    videos.push(video);
+
+    // TARGET ENTITY
+    const target = document.createElement("a-entity");
+    target.setAttribute("mindar-image-target", `targetIndex: ${index}`);
+
+    const aVideo = document.createElement("a-video");
+    aVideo.setAttribute("src", `#${item.name}`);
+    aVideo.setAttribute("width", "1");
+    aVideo.setAttribute("height", "0.56");
+    aVideo.setAttribute("position", "0 0 0");
+
+    target.appendChild(aVideo);
+    sceneEl.appendChild(target);
+
+    // EVENTS
+    target.addEventListener("targetFound", () => {
+      videos.forEach(v => v.pause());
+      video.currentTime = 0;
+      video.play();
+    });
+
+    target.addEventListener("targetLost", () => {
+      video.pause();
+    });
+  });
+
+  // START AR
+  startBtn.addEventListener("click", async () => {
+    startUI.style.display = "none";
+    await sceneEl.systems["mindar-image-system"].start();
+
+    // unlock playback
+    for (const v of videos) {
+      try { await v.play(); v.pause(); } catch {}
+    }
+  });
+</script>
+
+</body>
+</html>
